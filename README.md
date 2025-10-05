@@ -12,7 +12,7 @@ Users can enter their Discord username, select their community roles and instant
 -  **Role-based eligibility calculation**  
 -  **Token worth estimation** at multiple market cap tiers  
 -  **Mobile + desktop responsive layout**  
--  **Lightweight** — no backend or database required  
+-  **Lightweight**, no backend or database required  
 -   Built for fun by the **Monad Community**
 
 ---
