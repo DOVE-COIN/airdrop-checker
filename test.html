@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monad Community Fun Checker</title>
+
+  <!-- Google Font (optional - requires internet) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0711;
+      --card:#120923;
+      --muted:#bfb7d8;
+      --accent1:#7c3aed; /* purple */
+      --accent2:#a78bfa; /* light purple */
+      --glow: 0 10px 30px rgba(124,58,237,0.18);
+      --glass: rgba(255,255,255,0.03);
+      --radius:14px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.10), transparent 8%),
+                  radial-gradient(800px 400px at 90% 90%, rgba(167,139,250,0.04), transparent 8%),
+                  var(--bg);
+      color: #eee;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+
+    .wrap {
+      width:100%;
+      max-width:920px;
+      margin:12px;
+    }
+
+    header {
+      text-align:center;
+      margin-bottom:14px;
+    }
+    header h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:0.2px;
+      color:var(--accent2);
+      font-weight:800;
+    }
+    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: var(--radius);
+      padding:18px;
+      box-shadow: var(--glow);
+      border: 1px solid rgba(255,255,255,0.03);
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:18px;
+      align-items:start;
+    }
+
+    @media (max-width:880px){
+      .card{grid-template-columns:1fr; padding:16px;}
+    }
+
+    .left {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    .input {
+      background:var(--glass);
+      border-radius:12px;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,0.03);
+      color: #fff;
+      outline:none;
+      font-size:15px;
+      transition: box-shadow 200ms, transform 120ms;
+    }
+    .input:focus{ box-shadow: 0 6px 18px rgba(124,58,237,0.12); transform: translateY(-2px); }
+
+    .multi {
+      position:relative;
+    }
+    .selector {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      min-height:48px;
+      padding:10px;
+      border-radius:12px;
+      cursor:pointer;
+      background:var(--glass);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .selector .placeholder { color:var(--muted); font-size:14px; }
+    .badges { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .badge {
+      background: linear-gradient(180deg, rgba(167,139,250,0.12), rgba(124,58,237,0.08));
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:13px;
+      color: #fff;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .badge small {opacity:0.95; font-weight:700; font-size:13px}
+
+    .dropdown {
+      position:absolute;
+      left:0;
+      right:0;
+      top:64px;
+      background: linear-gradient(180deg, rgba(12,6,20,0.96), rgba(18,9,35,0.98));
+      border-radius:12px;
+      padding:8px;
+      box-shadow: 0 12px 40px rgba(10,6,20,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+      z-index:40;
+      max-height:260px;
+      overflow:auto;
+      opacity:0;
+      transform-origin:top center;
+      transform: translateY(-8px) scale(0.98);
+      transition:opacity 220ms, transform 220ms;
+      pointer-events:none;
+    }
+    .dropdown.open { opacity:1; transform: translateY(0) scale(1); pointer-events:auto; }
+
+    .item {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 6px;
+      border-radius:8px;
+      cursor:pointer;
+      transition: background 140ms;
+      font-size:14px;
+      color:var(--muted);
+    }
+    .item:hover { background: rgba(255,255,255,0.02); color:#fff; }
+    .item input { width:16px; height:16px; accent-color: var(--accent1); }
+
+    .right {
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border-radius:12px;
+      padding:14px;
+      border:1px solid rgba(255,255,255,0.02);
+      min-height:220px;
+    }
+
+    .row { display:flex; gap:12px; align-items:center; }
+    .row.space { justify-content:space-between; }
+
+    button.primary {
+      background: linear-gradient(90deg,var(--accent1),#6d28d9);
+      border:none;
+      color:white;
+      padding:11px 14px;
+      font-weight:700;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow: 0 8px 30px rgba(124,58,237,0.18);
+      transition: transform 140ms, opacity 120ms;
+      font-size:15px;
+    }
+    button.primary:active { transform: translateY(1px) scale(0.998); }
+    button.ghost {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:14px;
+    }
+
+    .result {
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(124,58,237,0.04), rgba(167,139,250,0.02));
+      border:1px solid rgba(124,58,237,0.12);
+      color:#fff;
+      font-size:15px;
+      opacity:0;
+      transform:translateY(8px);
+      transition:opacity 260ms, transform 260ms;
+    }
+    .result.show { opacity:1; transform:translateY(0); }
+
+    .result h3 { margin:0 0 8px 0; font-size:16px }
+    .muted-sm { color:var(--muted); font-size:13px; margin-top:6px; }
+
+    .estimates { margin-top:12px; display:flex; flex-direction:column; gap:8px }
+    .estimate-row { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:6px 8px; border-radius:10px; background: rgba(0,0,0,0.03); }
+    .estimate-row small { color:var(--muted); font-size:13px; }
+    .estimate-row strong { font-size:14px; }
+
+    footer {
+      margin-top:14px;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .warning {
+      margin-top:8px;
+      color:#ffd28a;
+      font-size:13px;
+      background: rgba(255,210,138,0.04);
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,210,138,0.06);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application">
+    <header>
+      <h1>Monad Community Fun Checker</h1>
+      <p class="muted-sm">Check eligibility and estimated worth across market cap scenarios</p>
+    </header>
+
+    <main class="card" aria-label="Airdrop checker card">
+
+      <!-- LEFT / INPUTS -->
+      <div class="left">
+        <div>
+          <label for="username">Discord username (required)</label>
+          <input id="username" class="input" type="text" placeholder="e.g., GentleDove#0001" autocomplete="off" />
+        </div>
+
+        <div>
+          <label>Select roles (multiple)</label>
+          <div class="multi" id="multiSelect">
+            <div class="selector" id="selectorBtn" role="button" aria-haspopup="listbox" tabindex="0" aria-expanded="false">
+              <div class="badges" id="selectedBadges">
+                <span class="placeholder" id="placeholderText">Choose roles…</span>
+              </div>
+              <div style="margin-left:auto;color:var(--muted);font-size:13px">▾</div>
+            </div>
+
+            <div class="dropdown" id="dropdown" role="listbox" aria-multiselectable="true">
+              <!-- items inserted by JS -->
+            </div>
+          </div>
+
+          <div class="hint">Tap role names to select. Selected roles show as badges above. Click badges to remove.</div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="checkBtn">Check Eligibility</button>
+          <button class="ghost" id="resetBtn" title="Clear">Reset</button>
+        </div>
+
+        <div id="warningBox" class="warning" style="display:none;"></div>
+
+        <div class="muted-sm" style="margin-top:6px">Roles & token amounts are fixed for this fun checker.</div>
+      </div>
+
+      <!-- RIGHT / RESULT & ESTIMATES -->
+      <aside class="right" aria-live="polite">
+        <div class="row space" style="align-items:flex-end">
+          <div>
+            <div style="font-size:12px;color:var(--muted)">Total supply</div>
+            <div style="font-weight:800;font-size:18px">100,000,000,000</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--muted)">Market cap tiers</div>
+            <div style="font-weight:700">Visualised vertically in the estimator</div>
+          </div>
+        </div>
+
+        <div id="resultArea" class="result" aria-hidden="true">
+          <h3 id="resultHeader">—</h3>
+          <div id="roleLine" class="muted-sm">—</div>
+
+          <!-- Worth Estimation Section (formatted per request) -->
+          <div style="margin-top:12px;">
+            <div style="font-weight:700">Total Supply: 100,000,000,000 tokens</div>
+            <div style="height:8px;"></div>
+            <div style="font-weight:700">Estimated Worth:</div>
+            <div id="verticalMarketCaps" style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+              <!-- Rows injected by JS in the form:
+                   <div class="estimate-row"><small>500M Market Cap →</small><strong>$X</strong></div>
+              -->
+            </div>
+          </div>
+
+        </div>
+
+        <div class="muted-sm" style="margin-top:12px">All numbers are illustrative. This is a static client-side tool with no blockchain interaction.</div>
+      </aside>
+    </main>
+
+    <footer>
+      built by gentledove.nad
+    </footer>
+  </div>
+
+  <script>
+    // ======== CONFIG ========
+    const TOTAL_SUPPLY = 100_000_000_000; // 100 billion
+
+    // Updated token amounts (divided by 2 except roles 9 and 10 kept)
+    const ROLES = [
+      { id: "community_team", label: "Community team", tokens: 500_000_000 },
+      { id: "mon2", label: "Mon2", tokens: 30_000_000 },
+      { id: "mon", label: "Mon", tokens: 6_000_000 },
+      { id: "nad_og", label: "Nad og", tokens: 1_250_000 },
+      { id: "running_hot", label: "Running hot", tokens: 600_000 },
+      { id: "quants", label: "Quants", tokens: 320_000 },
+      { id: "tg", label: "TG", tokens: 275_000 },
+      { id: "nads", label: "Nads", tokens: 70_000 },
+      { id: "localnads", label: "Localnads", tokens: 33_333 },
+      { id: "full_access", label: "Full access", tokens: 3_949 }
+    ];
+
+    // Market caps (we will display each row vertically)
+    const MARKETCAPS = [
+      { label: "500M", value: 500_000_000 },
+      { label: "1B",   value: 1_000_000_000 },
+      { label: "5B",   value: 5_000_000_000 },
+      { label: "10B",  value: 10_000_000_000 },
+      { label: "20B",  value: 20_000_000_000 }
+    ];
+
+    // ======== UTILITIES ========
+    function formatInt(n){
+      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    function formatCurrencyUSD(n){
+      return "$" + Number(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    // ======== DOM ========
+    const dropdown = document.getElementById('dropdown');
+    const selectorBtn = document.getElementById('selectorBtn');
+    const selectedBadges = document.getElementById('selectedBadges');
+    const placeholderText = document.getElementById('placeholderText');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultArea = document.getElementById('resultArea');
+    const resultHeader = document.getElementById('resultHeader');
+    const roleLine = document.getElementById('roleLine');
+    const verticalMarketCaps = document.getElementById('verticalMarketCaps');
+    const usernameInput = document.getElementById('username');
+    const warningBox = document.getElementById('warningBox');
+
+    let dropdownOpen = false;
+    let selected = new Set();
+
+    // Build dropdown items (clean, deterministic)
+    ROLES.forEach((r, idx) => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.setAttribute('data-id', r.id);
+      item.setAttribute('data-idx', idx);
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'cb_' + r.id;
+      cb.tabIndex = -1;
+
+      const txt = document.createElement('div');
+      txt.innerHTML = `<div style="font-weight:700;color:#fff">${r.label}</div><div style="font-size:12px;color:var(--muted)">${formatInt(r.tokens)} tokens</div>`;
+
+      item.appendChild(cb);
+      item.appendChild(txt);
+
+      item.addEventListener('click', (e) => {
+        // toggle selection deterministically (no randomness)
+        const id = r.id;
+        const checkbox = cb;
+        if(selected.has(id)){
+          selected.delete(id);
+          checkbox.checked = false;
+        } else {
+          selected.add(id);
+          checkbox.checked = true;
+        }
+        refreshBadges();
+      });
+
+      dropdown.appendChild(item);
+    });
+
+    function refreshBadges(){
+      selectedBadges.innerHTML = '';
+      if(selected.size === 0){
+        placeholderText.style.display = 'inline';
+      } else {
+        placeholderText.style.display = 'none';
+        // keep insertion order stable by mapping through ROLES
+        ROLES.forEach(role => {
+          if(selected.has(role.id)){
+            const b = document.createElement('span');
+            b.className = 'badge';
+            b.innerHTML = `<small>${role.label}</small> <span style="opacity:0.85;font-weight:700">&nbsp;${formatInt(role.tokens)}</span>`;
+            b.addEventListener('click', (e) => {
+              e.stopPropagation();
+              selected.delete(role.id);
+              const cb = document.getElementById('cb_' + role.id);
+              if(cb) cb.checked = false;
+              refreshBadges();
+            });
+            selectedBadges.appendChild(b);
+          }
+        });
+      }
+    }
+
+    function openDropdown(){
+      dropdown.classList.add('open');
+      selectorBtn.setAttribute('aria-expanded','true');
+      dropdownOpen = true;
+    }
+    function closeDropdown(){
+      dropdown.classList.remove('open');
+      selectorBtn.setAttribute('aria-expanded','false');
+      dropdownOpen = false;
+    }
+
+    selectorBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownOpen ? closeDropdown() : openDropdown();
+    });
+    selectorBtn.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        dropdownOpen ? closeDropdown() : openDropdown();
+      } else if(e.key === 'Escape'){
+        closeDropdown();
+      }
+    });
+    window.addEventListener('click', (e) => {
+      if(!document.getElementById('multiSelect').contains(e.target)){
+        closeDropdown();
+      }
+    });
+
+    // ======== CALCULATION ========
+    function computeTotalTokens(){
+      let total = 0;
+      const roleNames = [];
+      // iterate ROLES to keep order consistent
+      for(const r of ROLES){
+        if(selected.has(r.id)){
+          total += r.tokens;
+          roleNames.push(r.label);
+        }
+      }
+      return { total, roleNames };
+    }
+
+    function renderVerticalEstimates(totalTokens){
+      verticalMarketCaps.innerHTML = '';
+      // If no tokens, show zeros
+      for(const mc of MARKETCAPS){
+        const pricePerToken = mc.value / TOTAL_SUPPLY; // USD per token
+        const worth = totalTokens * pricePerToken;
+        const row = document.createElement('div');
+        row.className = 'estimate-row';
+        row.innerHTML = `<small style="min-width:120px">${mc.label} Market Cap →</small><strong>${formatCurrencyUSD(worth)}</strong>`;
+        verticalMarketCaps.appendChild(row);
+      }
+    }
+
+    // ======== BUTTON ACTIONS ========
+    function showWarning(msg){
+      warningBox.style.display = 'block';
+      warningBox.textContent = msg;
+    }
+    function hideWarning(){
+      warningBox.style.display = 'none';
+      warningBox.textContent = '';
+    }
+
+    checkBtn.addEventListener('click', () => {
+      hideWarning();
+      const rawName = usernameInput.value.trim();
+      if(!rawName){
+        showWarning("⚠️ Please enter your Discord username to continue.");
+        usernameInput.focus();
+        return;
+      }
+
+      if(selected.size === 0){
+        showWarning("❌ Please select at least one role to check eligibility.");
+        return;
+      }
+
+      // compute
+      const { total, roleNames } = computeTotalTokens();
+
+      // Display eligible message
+      resultHeader.innerHTML = `✅ ${escapeHtml(rawName)} is eligible for ${formatInt(total)} tokens`;
+      roleLine.textContent = `(Roles: ${roleNames.join(' + ')})`;
+
+      // Render vertical market cap estimates
+      renderVerticalEstimates(total);
+
+      // show result
+      resultArea.classList.add('show');
+      resultArea.setAttribute('aria-hidden','false');
+
+      // close dropdown for neatness
+      closeDropdown();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      selected.clear();
+      document.querySelectorAll('#dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+      refreshBadges();
+      usernameInput.value = '';
+      resultArea.classList.remove('show');
+      verticalMarketCaps.innerHTML = '';
+      hideWarning();
+    });
+
+    // Basic HTML escaping for display
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+    }
+
+    // Final initialisation
+    refreshBadges();
+
+    // Make dropdown items keyboard-accessible
+    dropdown.querySelectorAll('.item').forEach((it, i, arr) => {
+      it.tabIndex = 0;
+      it.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          it.click();
+        } else if(e.key === 'ArrowDown'){
+          e.preventDefault();
+          const next = arr[(i+1) % arr.length];
+          next.focus();
+        } else if(e.key === 'ArrowUp'){
+          e.preventDefault();
+          const prev = arr[(i-1+arr.length) % arr.length];
+          prev.focus();
+        }
+      });
+    });
+
+  </script>
+</body>
+</html>
